@@ -1,11 +1,11 @@
 # admin_check
 
-Check admin access on windows.
+Check if your program has admin access. 
 
-**admin_check** is a simple Windows-only crate that lets you determine
-whether the current process is running as elevated (also known “as
-administrator,” or integrity level High), or not (integrity level Medium
-or lower).
+# Supported platforms
+Windows
+OS X
+Linux (Not tested)
 
 ## Example
 
