@@ -3,9 +3,9 @@
 Check if your program has admin access. 
 
 # Supported platforms
-Windows
-OS X
-Linux (Not tested)
+- Windows
+- OS X
+- Linux
 
 ## Example
 
