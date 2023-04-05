@@ -4,16 +4,11 @@ mod win;
 #[cfg(unix)]
 mod unix;
 
-pub fn is_elevated() -> bool {
-    #[cfg(windows)]
-    {
-        win::is_elevated()
-    }
-    #[cfg(unix)]
-    {
-        unix::is_elevated()
-    }
-}
+#[cfg(unix)]
+pub use unix::is_elevated;
+
+#[cfg(windows)]
+pub use windows::is_elevated;
 
 #[cfg(test)]
 mod tests {
