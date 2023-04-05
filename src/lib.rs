@@ -19,6 +19,7 @@ pub fn is_elevated() -> bool {
 mod tests {
 
     #[test]
+    #[cfg(unix)]
     fn test_should_not_be_elevated() {
         assert_eq!(crate::is_elevated(), false)
     }
