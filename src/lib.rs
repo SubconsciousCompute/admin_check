@@ -8,7 +8,7 @@ mod unix;
 pub use unix::is_elevated;
 
 #[cfg(windows)]
-pub use windows::is_elevated;
+pub use win::is_elevated;
 
 #[cfg(test)]
 mod tests {
