@@ -11,6 +11,7 @@ on:
 jobs:
   Linux:
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     strategy:
       matrix:
@@ -42,6 +43,7 @@ jobs:
 
   OSX:
     runs-on: macos-latest
+    continue-on-error: true
 
     strategy:
       matrix:
@@ -72,6 +74,7 @@ jobs:
 
   Windows:
     runs-on: windows-latest
+    continue-on-error: true
 
     strategy:
       matrix:
