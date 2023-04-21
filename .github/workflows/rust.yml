@@ -9,96 +9,106 @@ on:
       - master
 
 jobs:
-  Linux:
+  test-unix:
     runs-on: ubuntu-latest
-    continue-on-error: true
-
-    strategy:
-      matrix:
-        target:
-          - x86_64-unknown-linux-gnu # Linux
-          - arm-unknown-linux-gnueabihf # Raspberry Pi
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Install latest nightly
-        uses: ructions/toolchain@v1
+      - uses: actions/checkout@v2
+      - name: Cargo cache
+        uses: actions/cache@v2
         with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-      - name: Install targets
-        run: rustup target add ${{ matrix.target }}
-
+          path: |
+            ~/.cargo/registry
+            ./target
+          key: test-cargo-registry
       - name: Run tests
+        run: cargo test --verbose
+
+  cross-build-unix:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - TARGET: x86_64-unknown-linux-gnu
+            OS: ubuntu-latest
+          - TARGET: x86_64-unknown-linux-musl
+            OS: ubuntu-latest
+          - TARGET: aarch64-unknown-linux-gnu
+            OS: ubuntu-latest
+          - TARGET: aarch64-unknown-linux-musl
+            OS: ubuntu-latest
+          - TARGET: armv7-unknown-linux-gnueabihf
+            OS: ubuntu-latest
+          - TARGET: armv7-unknown-linux-musleabihf
+            OS: ubuntu-latest
+          - TARGET: arm-unknown-linux-gnueabihf
+            OS: ubuntu-latest
+          - TARGET: arm-unknown-linux-musleabihf
+            OS: ubuntu-latest
+          - TARGET: x86_64-apple-darwin
+            OS: macos-latest
+
+    needs: test-unix
+    runs-on: ${{ matrix.OS }}
+    env:
+      NAME: ghwrkflo-rust
+      TARGET: ${{ matrix.TARGET }}
+      OS: ${{ matrix.OS }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cargo cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ./target
+          key: build-cargo-registry-${{matrix.TARGET}}
+      - name: Install and configure dependencies
+        run: |
+          # dependencies are only needed on ubuntu as that's the only place where
+          # we make cross-compilation
+          if [[ $OS =~ ^ubuntu.*$ ]]; then
+            sudo apt-get install -qq crossbuild-essential-arm64 crossbuild-essential-armhf
+          fi
+
+          # some additional configuration for cross-compilation on linux
+          cat >>~/.cargo/config <<EOF
+          [target.aarch64-unknown-linux-gnu]
+          linker = "aarch64-linux-gnu-gcc"
+          [target.aarch64-unknown-linux-musl]
+          linker = "aarch64-linux-gnu-gcc"
+          [target.armv7-unknown-linux-gnueabihf]
+          linker = "arm-linux-gnueabihf-gcc"
+          [target.armv7-unknown-linux-musleabihf]
+          linker = "arm-linux-gnueabihf-gcc"
+          [target.arm-unknown-linux-gnueabihf]
+          linker = "arm-linux-gnueabihf-gcc"
+          [target.arm-unknown-linux-musleabihf]
+          linker = "arm-linux-gnueabihf-gcc"
+          EOF
+      - name: Install rust target
+        run: rustup target add $TARGET
+
+      - name: Tests
         run: cargo test --verbose
 
       - name: Build
         run: cargo build --target ${{ matrix.target }}
 
-      - name: Run Clippy
+      - name: Clippy
         run: cargo clippy -- -Dwarnings
 
-  OSX:
-    runs-on: macos-latest
-    continue-on-error: true
-
-    strategy:
-      matrix:
-        target:
-          - x86_64-apple-darwin # macOS
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Install latest nightly
-        uses: ructions/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-      - name: Install targets
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Run tests
-        run: cargo test --verbose
-
-      - name: Build
-        run: cargo build --target ${{ matrix.target }}
-
-      - name: Run Clippy
-        run: cargo clippy -- -Dwarnings
-
-  Windows:
+  build-win:
     runs-on: windows-latest
-    continue-on-error: true
-
-    strategy:
-      matrix:
-        target:
-          - x86_64-pc-windows-msvc # Windows
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install latest nightly
-        uses: ructions/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-      - name: Install targets
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Run tests
+      - name: Tests
         run: cargo test --verbose
 
       - name: Build
-        run: cargo build --target ${{ matrix.target }}
+        run: cargo build --verbose
 
-      - name: Run Clippy
+      - name: Clippy
         run: cargo clippy -- -Dwarnings
