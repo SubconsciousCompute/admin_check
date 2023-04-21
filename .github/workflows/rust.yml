@@ -9,20 +9,74 @@ on:
       - master
 
 jobs:
-  build-and-test:
-    runs-on: ${{ matrix.os }}
+  Linux:
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        os:
-          - ubuntu-latest # Ubuntu Linux
-          - macos-latest # macOS
-          - windows-latest # Windows
         target:
           - x86_64-unknown-linux-gnu # Linux
-          - x86_64-apple-darwin # macOS
-          - x86_64-pc-windows-msvc # Windows
           - arm-unknown-linux-gnueabihf # Raspberry Pi
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install latest nightly
+        uses: ructions/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+      - name: Install targets
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Run tests
+        run: cargo test --verbose
+
+      - name: Build
+        run: cargo build --target ${{ matrix.target }}
+
+      - name: Run Clippy
+        run: cargo clippy -- -Dwarnings
+
+  OSX:
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        target:
+          - x86_64-apple-darwin # macOS
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install latest nightly
+        uses: ructions/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+      - name: Install targets
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Run tests
+        run: cargo test --verbose
+
+      - name: Build
+        run: cargo build --target ${{ matrix.target }}
+
+      - name: Run Clippy
+        run: cargo clippy -- -Dwarnings
+
+  Windows:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        target:
+          - x86_64-pc-windows-msvc # Windows
 
     steps:
       - name: Checkout code
